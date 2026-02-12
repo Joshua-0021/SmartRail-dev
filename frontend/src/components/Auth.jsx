@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   createUserWithEmailAndPassword,
@@ -25,10 +25,19 @@ export default function Auth({ onClose }) {
   const isPhone = /^[0-9]{10}$/.test(identifier);
 
   // ✅ Close button uses the passed prop
+  // ✅ Close button uses the passed prop
   const handleClose = () => {
     if (onClose) onClose();
     else navigate("/");
   };
+
+  // 🔒 Lock body scroll when modal is open
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, []);
 
   const handleAuth = async () => {
     try {
@@ -157,6 +166,12 @@ export default function Auth({ onClose }) {
       <h2 className="text-2xl font-bold text-center text-black">
         {isSignup ? "Create account" : "Welcome back"}
       </h2>
+
+      <p className="text-center text-gray-500 text-sm -mt-3 mb-2">
+        {isSignup
+          ? "Start your journey with us today."
+          : "Please enter your details to sign in."}
+      </p>
 
       {/* GOOGLE BUTTON */}
       <button

@@ -182,6 +182,44 @@ export default function App() {
     return () => unsub();
   }, []);
 
+  // Persist scroll position in sessionStorage and restore on reload/back-navigation.
+  useEffect(() => {
+    const saveScroll = () => {
+      try {
+        sessionStorage.setItem('sr:lastScroll', String(window.scrollY || 0));
+      } catch (e) {}
+    };
+
+    const restoreScroll = () => {
+      try {
+        const entries = performance.getEntriesByType && performance.getEntriesByType('navigation');
+        const navType = (entries && entries[0] && entries[0].type) || (performance.navigation && performance.navigation.type === 1 ? 'reload' : 'navigate');
+        const saved = sessionStorage.getItem('sr:lastScroll');
+
+        // Only restore saved position for back/forward navigation.
+        // For reloads and fresh navigations, go to top (hero).
+        if (navType === 'back_forward' && saved) {
+          const y = parseInt(saved, 10) || 0;
+          requestAnimationFrame(() => window.scrollTo({ top: y, left: 0 }));
+        } else {
+          // reload or fresh navigation: go to top / hero
+          requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0 }));
+        }
+      } catch (e) {}
+    };
+
+    // Restore once on mount
+    restoreScroll();
+
+    // Save on unload/pagehide
+    window.addEventListener('beforeunload', saveScroll);
+    window.addEventListener('pagehide', saveScroll);
+    return () => {
+      window.removeEventListener('beforeunload', saveScroll);
+      window.removeEventListener('pagehide', saveScroll);
+    };
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-900 relative">
       <Header onLoginClick={() => setIsAuthOpen(true)} />
