@@ -8,8 +8,9 @@ import BookingCard from "./components/Bookingcaard";
 import Pnrstatus from "./components/Pnrstatus";   // ✅ CORRECT
 import Auth from "./components/Auth";
 
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import SeatLayout from "./pages/SeatLayout";
+import Support from "./pages/Support";
 
 import { supabase } from "./supabaseClient";
 
@@ -229,28 +230,40 @@ export default function App() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-900 relative">
-      <Header onLoginClick={() => setIsAuthOpen(true)} />
+      <div className="min-h-screen flex flex-col bg-gray-900 relative">
+        <Header onLoginClick={() => setIsAuthOpen(true)} />
 
-      {isAuthOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <Auth onClose={() => setIsAuthOpen(false)} />
-        </div>
-      )}
-
-      <div className="min-h-screen flex flex-col pt-[70px]">
-        <main className="flex-grow">
-          <Hero />
-          <BookingCard />
-
-          <div id="pnr-section" className="scroll-mt-[150px]">
-            <Pnrstatus />
+        {isAuthOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <Auth onClose={() => setIsAuthOpen(false)} />
           </div>
-        </main>
+        )}
 
-        <Footer />
+        <div className="min-h-screen flex flex-col pt-[70px]">
+          <main className="flex-grow">
+            <Routes>
+              <Route
+                path="/"
+                element={
+                  <>
+                    <Hero />
+                    <BookingCard />
+                    <div id="pnr-section" className="scroll-mt-[150px]">
+                      <Pnrstatus />
+                    </div>
+                  </>
+                }
+              />
+
+              <Route path="/support" element={<Support />} />
+
+              <Route path="/seat-layout" element={<SeatLayout />} />
+            </Routes>
+          </main>
+
+          <Footer />
+        </div>
       </div>
-    </div>
   );
 }
 
