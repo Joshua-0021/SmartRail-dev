@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
+import complaintsRoutes from './routes/complaints.js';
 
 dotenv.config();
 
@@ -18,6 +19,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/complaints', complaintsRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

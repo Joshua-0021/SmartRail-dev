@@ -114,6 +114,19 @@ function LabelNavbar({ hidden, setHidden }) {
           scrollbar-hide
         "
       >
+        <Link to="/seat-layout" className={navItem}>
+          Seat Availability
+          <span className="absolute left-0 -bottom-1 h-[2px] w-0 bg-[#2B2B2B] transition-all duration-300 group-hover:w-full"></span>
+        </Link>
+
+
+        <button onClick={goToPnrSection} className={navItem}>
+          PNR Status
+          <span className="absolute left-0 -bottom-1 h-[2px] w-0 bg-[#2B2B2B] transition-all duration-300 group-hover:w-full"></span>
+        </button>
+
+
+
 
         <a className={navItem}>
           Notifications
@@ -123,34 +136,6 @@ function LabelNavbar({ hidden, setHidden }) {
           <span className="absolute left-0 -bottom-1 h-[2px] w-0 bg-[#2B2B2B] transition-all duration-300 group-hover:w-full"></span>
         </a>
 
-        <button onClick={goToPnrSection} className={navItem}>
-          PNR Status
-          <span className="absolute left-0 -bottom-1 h-[2px] w-0 bg-[#2B2B2B] transition-all duration-300 group-hover:w-full"></span>
-        </button>
-
-        <Link to="/" className={navItem}>
-          Booking History
-          <span className="absolute left-0 -bottom-1 h-[2px] w-0 bg-[#2B2B2B] transition-all duration-300 group-hover:w-full"></span>
-        </Link>
-
-        <Link to="/seat-layout" className={navItem}>
-          Seat Availability
-          <span className="absolute left-0 -bottom-1 h-[2px] w-0 bg-[#2B2B2B] transition-all duration-300 group-hover:w-full"></span>
-        </Link>
-
-        <Link to="/" className={navItem}>
-          About Us
-          <span className="absolute left-0 -bottom-1 h-[2px] w-0 bg-[#2B2B2B] transition-all duration-300 group-hover:w-full"></span>
-        </Link>
-
-        <button onClick={(e) => {
-          e.preventDefault();
-          const el = document.getElementById("support-section");
-          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-        }} className={navItem}>
-          Support
-          <span className="absolute left-0 -bottom-1 h-[2px] w-0 bg-[#2B2B2B] transition-all duration-300 group-hover:w-full"></span>
-        </button>
 
         <button onClick={(e) => {
           e.preventDefault();
@@ -169,6 +154,18 @@ function LabelNavbar({ hidden, setHidden }) {
           <span className="absolute left-0 -bottom-1 h-[2px] w-0 bg-[#2B2B2B] transition-all duration-300 group-hover:w-full"></span>
         </button>
 
+        <button onClick={(e) => {
+          e.preventDefault();
+          const el = document.getElementById("support-section");
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }} className={navItem}>
+          Support
+          <span className="absolute left-0 -bottom-1 h-[2px] w-0 bg-[#2B2B2B] transition-all duration-300 group-hover:w-full"></span>
+        </button>
+        <Link to="/" className={navItem}>
+          About Us
+          <span className="absolute left-0 -bottom-1 h-[2px] w-0 bg-[#2B2B2B] transition-all duration-300 group-hover:w-full"></span>
+        </Link>
       </div>
     </nav>
   );

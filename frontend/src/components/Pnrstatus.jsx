@@ -73,7 +73,7 @@ export default function PNRStatus() {
     <>
       <LabelNavbar />
 
-      <div id="pnr-section" className="max-w-6xl mx-auto mt-20 px-4 pb-14 flex justify-center flex-col text-white">
+      <div id="pnr-section" className="max-w-6xl mx-auto mt-28 px-4 pb-14 flex justify-center flex-col text-white">
 
         {!showResult ? (
           <>

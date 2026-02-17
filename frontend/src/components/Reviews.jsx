@@ -302,9 +302,7 @@ export default function Reviews() {
                                 }} className="flex items-center gap-2 px-3 py-1.5 bg-white hover:bg-slate-200 text-black rounded-lg font-bold text-[10px] uppercase transition-all shadow-lg active:scale-95">
                                     <Plus className="w-3 h-3" /> Add Review
                                 </button>
-                            ) : (
-                                <span className="text-[10px] text-white/40 font-bold uppercase tracking-wider">Login to review</span>
-                            )}
+                            ) : null}
                         </div>
                         <div className="grid grid-cols-2 gap-y-6 gap-x-4">
                             {ratings.map((stat, idx) => {

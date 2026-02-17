@@ -19,6 +19,13 @@ export default function Support({ autoScroll = true }) {
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [selectedComplaint, setSelectedComplaint] = useState(null);
 
+  // Reply State
+  const [replies, setReplies] = useState([]);
+  const [replyText, setReplyText] = useState("");
+  const [markResolved, setMarkResolved] = useState(false);
+  const [submittingReply, setSubmittingReply] = useState(false);
+  const [loadingReplies, setLoadingReplies] = useState(false);
+
   useEffect(() => {
     // Custom wrapper to set user safely
     const getUser = async () => {
@@ -40,6 +47,50 @@ export default function Support({ autoScroll = true }) {
       fetchHistory();
     }
   }, [showHistory, user]);
+
+  // Fetch replies when a complaint is selected
+  useEffect(() => {
+    const fetchReplies = async () => {
+      if (!selectedComplaint) {
+        setReplies([]);
+        setReplyText("");
+        setMarkResolved(false);
+        return;
+      }
+
+      setLoadingReplies(true);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          console.error('No session found');
+          setLoadingReplies(false);
+          return;
+        }
+
+        const response = await fetch(`http://localhost:5000/api/complaints/${selectedComplaint.id}/replies`, {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setReplies(data.replies || []);
+        } else {
+          console.error('Failed to fetch replies');
+          setReplies([]);
+        }
+      } catch (error) {
+        console.error('Error fetching replies:', error);
+        setReplies([]);
+      } finally {
+        setLoadingReplies(false);
+      }
+    };
+
+    fetchReplies();
+  }, [selectedComplaint]);
 
   useEffect(() => {
     const handlePopState = () => {
@@ -107,6 +158,66 @@ export default function Support({ autoScroll = true }) {
       uploadedUrls.push(publicUrl);
     }
     return uploadedUrls;
+  };
+
+  const handleSubmitReply = async () => {
+    if (!replyText.trim() || !selectedComplaint) return;
+
+    setSubmittingReply(true);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error('No session found - cannot submit reply');
+        setErrorMessage('Please log in to send a reply');
+        setTimeout(() => setErrorMessage(''), 3000);
+        setSubmittingReply(false);
+        return;
+      }
+
+      const response = await fetch(`http://localhost:5000/api/complaints/${selectedComplaint.id}/replies`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: replyText.trim(),
+          marks_resolved: markResolved
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+
+        // Add new reply to the list
+        setReplies([...replies, data.reply]);
+        setReplyText("");
+        setErrorMessage('');
+
+        // If marked as resolved, update the complaint status locally
+        if (markResolved) {
+          setSelectedComplaint({ ...selectedComplaint, status: 'resolved' });
+          setHistory(prev => prev.map(item =>
+            item.id === selectedComplaint.id
+              ? { ...item, status: 'resolved' }
+              : item
+          ));
+          setMarkResolved(false);
+        }
+      } else {
+        const errorData = await response.json();
+        console.error('Failed to submit reply:', errorData.error);
+        setErrorMessage(`Failed to send: ${errorData.error}`);
+        setTimeout(() => setErrorMessage(''), 3000);
+      }
+    } catch (error) {
+      console.error('Error submitting reply:', error);
+      setErrorMessage('Failed to send reply. Please try again.');
+      setTimeout(() => setErrorMessage(''), 3000);
+    } finally {
+      setSubmittingReply(false);
+    }
   };
 
   const handleDelete = async (id, images = []) => {
@@ -428,14 +539,14 @@ export default function Support({ autoScroll = true }) {
               </div>
 
               {/* Modal Body */}
-              <div className="p-6 overflow-y-auto custom-scrollbar">
+              <div className="p-6 overflow-y-auto custom-scrollbar max-h-[60vh]">
                 <div className="mb-8">
                   <h4 className="text-[10px] font-bold text-[#666] uppercase tracking-widest mb-3">Description</h4>
                   <p className="text-sm text-gray-300 font-mono leading-relaxed whitespace-pre-wrap">{selectedComplaint.description}</p>
                 </div>
 
                 {selectedComplaint.images && selectedComplaint.images.length > 0 && (
-                  <div>
+                  <div className="mb-8">
                     <h4 className="text-[10px] font-bold text-[#666] uppercase tracking-widest mb-3">Evidence</h4>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                       {selectedComplaint.images.map((imgUrl, idx) => (
@@ -452,6 +563,134 @@ export default function Support({ autoScroll = true }) {
                     </div>
                   </div>
                 )}
+
+                {/* Replies Section */}
+                <div>
+                  <h4 className="text-[10px] font-bold text-[#666] uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <span>Discussion Thread</span>
+                    <span className="text-[8px] bg-white/10 px-2 py-0.5 rounded-full">{replies.length}</span>
+                  </h4>
+
+                  {/* Reply List - Chat Style */}
+                  <div className="space-y-4 mb-6 max-h-80 overflow-y-auto custom-scrollbar pr-2">
+                    {loadingReplies ? (
+                      // Skeleton Loading for Chat
+                      <div className="space-y-4">
+                        {[1, 2, 3].map((i) => (
+                          <div key={i} className={`flex gap-3 ${i % 2 === 0 ? 'flex-row' : 'flex-row-reverse'} animate-pulse`}>
+                            <div className="w-8 h-8 rounded-full bg-white/5" />
+                            <div className={`flex flex-col ${i % 2 === 0 ? 'items-start' : 'items-end'} w-full`}>
+                              <div className={`h-3 w-20 bg-white/5 rounded mb-2 ${i % 2 === 0 ? 'self-start' : 'self-end'}`} />
+                              <div className={`h-12 w-[60%] bg-white/5 rounded-2xl ${i % 2 === 0 ? 'rounded-tl-sm' : 'rounded-tr-sm'}`} />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : replies.length === 0 ? (
+                      <div className="text-center py-8">
+                        <p className="text-xs text-gray-500 italic">No messages yet. Start the conversation below.</p>
+                      </div>
+                    ) : (
+                      replies.map(reply => (
+                        <div
+                          key={reply.id}
+                          className={`flex gap-3 ${reply.is_admin_reply ? 'flex-row' : 'flex-row-reverse'} animate-in slide-in-from-bottom-2 duration-300`}
+                        >
+                          {/* Avatar */}
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${reply.is_admin_reply
+                            ? 'bg-blue-500/20 text-blue-400'
+                            : 'bg-white/10 text-gray-400'
+                            }`}>
+                            {reply.is_admin_reply ? '🛡️' : '👤'}
+                          </div>
+
+                          {/* Message Bubble */}
+                          <div className={`flex flex-col ${reply.is_admin_reply ? 'items-start' : 'items-end'} max-w-[75%]`}>
+                            {/* Name and Time */}
+                            <div className={`flex items-center gap-2 mb-1 ${reply.is_admin_reply ? 'flex-row' : 'flex-row-reverse'}`}>
+                              <span className="text-[10px] font-bold text-white">
+                                {reply.is_admin_reply ? 'Support Team' : 'You'}
+                              </span>
+                              <span className="text-[9px] text-gray-500 font-mono">
+                                {new Date(reply.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </div>
+
+                            {/* Bubble */}
+                            <div className={`rounded-2xl px-4 py-3 ${reply.is_admin_reply
+                              ? 'bg-blue-500/20 rounded-tl-sm'
+                              : 'bg-white/5 rounded-tr-sm'
+                              }`}>
+                              <p className="text-sm text-gray-200 leading-relaxed">{reply.message}</p>
+                            </div>
+
+                            {/* Resolved Badge */}
+                            {reply.marks_resolved && (
+                              <div className="mt-2 px-3 py-1 bg-green-500/20 text-green-400 text-[9px] font-bold uppercase rounded-full flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3" />
+                                Issue Resolved
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Error Message */}
+                  {errorMessage && (
+                    <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg animate-in fade-in slide-in-from-bottom-2 duration-300">
+                      <p className="text-sm text-red-400 flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4" />
+                        {errorMessage}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Reply Input - only if not closed or resolved */}
+                  {selectedComplaint.status !== 'closed' && selectedComplaint.status !== 'resolved' && (
+                    <div className="space-y-3 border-t border-[#333] pt-6">
+                      <textarea
+                        value={replyText}
+                        onChange={(e) => setReplyText(e.target.value)}
+                        placeholder="Add a follow-up message or provide more details..."
+                        className="w-full bg-[#2a2a2a] border border-[#444] rounded-lg p-3 text-sm text-white placeholder-gray-500 focus:border-white/30 focus:outline-none transition-colors resize-none"
+                        rows={3}
+                      />
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <label className="flex items-center gap-2 text-xs text-gray-400 cursor-pointer hover:text-gray-300 transition-colors">
+                          <input
+                            type="checkbox"
+                            checked={markResolved}
+                            onChange={(e) => setMarkResolved(e.target.checked)}
+                            className="w-4 h-4 rounded border-gray-600 bg-[#2a2a2a] text-green-500 focus:ring-green-500/20"
+                          />
+                          Mark this issue as resolved
+                        </label>
+                        <button
+                          onClick={handleSubmitReply}
+                          disabled={!replyText.trim() || submittingReply}
+                          className="px-6 py-2.5 bg-white text-black rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-gray-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        >
+                          {submittingReply ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Sending...
+                            </>
+                          ) : (
+                            'Send Reply'
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {(selectedComplaint.status === 'resolved' || selectedComplaint.status === 'closed') && (
+                    <div className="border-t border-[#333] pt-4 text-center">
+                      <p className="text-xs text-gray-500 italic">This complaint has been {selectedComplaint.status}. No further replies can be added.</p>
+                    </div>
+                  )}
+                </div>
               </div>
               {/* Modal Footer - Actions */}
               {selectedComplaint.status === 'open' && (

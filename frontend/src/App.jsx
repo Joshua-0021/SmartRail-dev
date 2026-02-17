@@ -243,10 +243,10 @@ export default function App() {
                 <>
                   <Hero />
                   <BookingCard />
-                  <div id="pnr-section" className="scroll-mt-[150px]">
+                  <div id="pnr-section" className="scroll-mt-[160px]">
                     <Pnrstatus />
                   </div>
-                  <div id="reviews-section" className="scroll-mt-[150px]">
+                  <div id="reviews-section" className="scroll-mt-[140px]">
                     <Reviews />
                   </div>
                   <Support autoScroll={false} />

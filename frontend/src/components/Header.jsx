@@ -109,6 +109,15 @@ function Header({ onLoginClick }) {
             {showDropdown && (
               <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-[#2B2B2B] border border-[#D4D4D4] rounded-lg shadow-lg py-2 z-50 animate-in fade-in zoom-in-95 duration-200">
                 <button
+                  onClick={() => {
+                    navigate('/');
+                    setShowDropdown(false);
+                  }}
+                  className="w-full text-left px-4 py-2 text-[#2B2B2B] dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                >
+                  Booking History
+                </button>
+                <button
                   onClick={handleLogout}
                   className="w-full text-left px-4 py-2 text-[#2B2B2B] dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition"
                 >
