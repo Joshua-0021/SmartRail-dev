@@ -92,6 +92,24 @@ export default function Reviews() {
         setSelectedImageIndex((prev) => (prev - 1 + galleryItems.length) % galleryItems.length);
     };
 
+    // Keyboard arrow key navigation for lightbox
+    useEffect(() => {
+        if (!isLightboxOpen) return;
+
+        const handleKeyDown = (e) => {
+            if (e.key === 'ArrowRight') {
+                setSelectedImageIndex((prev) => (prev + 1) % galleryItems.length);
+            } else if (e.key === 'ArrowLeft') {
+                setSelectedImageIndex((prev) => (prev - 1 + galleryItems.length) % galleryItems.length);
+            } else if (e.key === 'Escape') {
+                setIsLightboxOpen(false);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isLightboxOpen, galleryItems.length]);
+
     const ratings = [
         { label: "Cleanliness", score: 4.8, color: "bg-emerald-500" },
         { label: "Safety", score: 4.9, color: "bg-blue-500" },
