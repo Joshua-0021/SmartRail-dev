@@ -181,16 +181,41 @@ export default function App() {
 
   // ✅ Supabase auth state listener
   useEffect(() => {
-    // Check for existing session
+    // Check for explicit logout from another app (like TTE portal)
+    const params = new URLSearchParams(window.location.search);
+    const isLogout = params.get('logout') === 'true';
+
+    if (isLogout) {
+      supabase.auth.signOut().then(() => {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('user');
+        setUser(null);
+        // Clean up the URL without a full page reload so it doesn't loop
+        window.history.replaceState({}, document.title, "/");
+      });
+      return; // Exit early so we don't process further auth steps on this mount
+    }
+
+    // Check for existing session (only if NOT explicitly logging out)
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
+      if (session?.user?.email?.toLowerCase().includes('tte')) {
+        window.location.href = 'http://localhost:5174/';
+      }
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // If we are actively in the middle of logging out, don't trigger the login redirect
+      if (event === 'SIGNED_OUT') {
+        setUser(null);
+        return;
+      }
+
       setUser(session?.user ?? null);
-      // Remove auto-navigation to avoid refreshing/redirecting on window focus
-      // if (event === "SIGNED_IN") { ... } 
+      if (session?.user?.email?.toLowerCase().includes('tte')) {
+        window.location.href = 'http://localhost:5174/';
+      }
     });
 
     return () => subscription.unsubscribe();
